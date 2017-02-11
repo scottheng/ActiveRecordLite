@@ -8,18 +8,21 @@ class SQLObject
 
   def self.columns
     # ...
-    return @columns_info unless @columns_info.nil?
 
-    @columns_info = DBConnection.execute2(<<-SQL)
+    return @columns_info if @columns_info
+
+    cols = DBConnection.execute2(<<-SQL).first
       SELECT
         *
       FROM
         #{self.table_name}
+      LIMIT
+        0
     SQL
 
-    @columns_info.first.map! do |el|
-      el.to_sym
-    end
+    cols.map!(&:to_sym)
+    @columns_info = cols
+
 
   end
 
@@ -62,6 +65,14 @@ class SQLObject
 
   def initialize(params = {})
     # ...
+
+    params.each do |attr_name, value|
+      attr_name = attr_name.to_sym
+      unless self.class.columns.include?(attr_name)
+        raise "unknown attribute '#{attr_name}'"
+      end
+      self.send("#{attr_name}=", value)
+    end
   end
 
   def attributes
