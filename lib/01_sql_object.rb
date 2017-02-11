@@ -53,10 +53,23 @@ class SQLObject
 
   def self.all
     # ...
+    hashes = DBConnection.execute(<<-SQL)
+      SELECT
+        *
+      FROM
+        #{table_name}
+    SQL
+    self.parse_all(hashes)
   end
 
   def self.parse_all(results)
     # ...
+    objects = []
+    results.map do |result|
+      objects << self.new(result)
+    end
+    objects
+
   end
 
   def self.find(id)
